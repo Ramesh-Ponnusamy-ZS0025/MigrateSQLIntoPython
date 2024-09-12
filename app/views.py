@@ -47,18 +47,16 @@ class GitRepositoryView(ModelView):
     edit_columns = ["repo_path", "branch_name", "username", "repo_name", "token"]
     add_exclude_columns = ["created_at","updated_at"]
 
-    @action("push", "Start Migration", "Do you really want to?", "fa-rocket")
-    def pushaction(self, items):
-        for item in items:
-            print(item.id)
-            push_to_git(item.id)
+    # @action("push", "Start Migration", "Do you really want to?", "fa-rocket")
+    # def pushaction(self, items):
+    #     for item in items:
+    #         print(item.id)
+    #         push_to_git(item.id)
+    #
+    #     return redirect(self.get_redirect())
 
-        return redirect(self.get_redirect())
 
 
-class DatabaseMasterView(MasterDetailView):
-    datamodel = SQLAInterface(DatabaseDetail)
-    related_views = [GitRepositoryView,ProcedureConversionView]
 
 """
     Create your Model based REST API::
@@ -91,10 +89,24 @@ class DatabaseMasterView(MasterDetailView):
 """
     Application wide 404 error handler
 """
+class DatabaseMasterView(MasterDetailView):
+    datamodel = SQLAInterface(DatabaseDetail)
+    related_views = [GitRepositoryView,ProcedureConversionView]
 
 class GroupModelView(ModelView):
     datamodel = SQLAInterface(DatabaseDetail)
-    related_views = [ProcedureConversionView]
+    related_views = [GitRepositoryView,ProcedureConversionView]
+    list_columns = ['dbname', 'user', 'host', 'status']
+
+    @action("migrations", "Start Migration", "Do you really want to?", "fa-rocket")
+    def myaction(self, items):
+        # for item in items:
+        #     print(item.id)
+        convert_procedures_task(items)
+        """
+            do something with the item record
+        """
+        return redirect(self.get_redirect())
 
 @appbuilder.app.errorhandler(404)
 def page_not_found(e):
@@ -108,33 +120,41 @@ def page_not_found(e):
 
 db.create_all()
 
+appbuilder.add_view(
+    GroupModelView,
+    "List Databases Group",
+    icon = "fa-folder-open-o",
+    category = "Databases",
+    category_icon = "fa-envelope"
+)
+
 # appbuilder.add_view(
-#     GroupModelView,
-#     "List Databases Group",
+#     DatabaseDetailView,
+#     "List Databases",
 #     icon = "fa-folder-open-o",
 #     category = "Databases",
 #     category_icon = "fa-envelope"
 # )
 
-appbuilder.add_view(
-    DatabaseDetailView,
-    "List Databases",
-    icon = "fa-folder-open-o",
-    category = "Databases",
-    category_icon = "fa-envelope"
-)
+#
+
+# appbuilder.add_view(
+#     GitRepositoryView,
+#     "List Git Repo",
+#     icon = "fa-folder-open-o",
+#     category = "Databases",
+#     category_icon = "fa-envelope",
+#     menu_cond=False
+#
+# )
 # appbuilder.add_view(
 #     ProcedureConversionView,
 #     "List Procedures",
 #     icon = "fa-envelope",
 #     category = "Databases"
 # )
-#
-# appbuilder.add_view(
-#     GitRepositoryView,
-#     "List Git Repo",
-#     icon = "fa-folder-open-o",
-#     category = "Git",
-#     category_icon = "fa-envelope"
-# )
-appbuilder.add_view(DatabaseMasterView,'Database Jobs',icon='fa fa-sitemap',category='Database Details',category_icon='fa fa-sitemap')
+appbuilder.add_view_no_menu(GitRepositoryView, endpoint=None, static_folder=None)
+appbuilder.add_view_no_menu(ProcedureConversionView, endpoint=None, static_folder=None)
+
+appbuilder.add_separator("Databases")
+appbuilder.add_view(DatabaseMasterView,'Database Jobs',icon='fa fa-sitemap',category='Databases',category_icon='fa fa-sitemap')
