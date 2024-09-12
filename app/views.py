@@ -108,13 +108,13 @@ def page_not_found(e):
 
 db.create_all()
 
-appbuilder.add_view(
-    GroupModelView,
-    "List Databases Group",
-    icon = "fa-folder-open-o",
-    category = "Databases",
-    category_icon = "fa-envelope"
-)
+# appbuilder.add_view(
+#     GroupModelView,
+#     "List Databases Group",
+#     icon = "fa-folder-open-o",
+#     category = "Databases",
+#     category_icon = "fa-envelope"
+# )
 
 appbuilder.add_view(
     DatabaseDetailView,
@@ -123,18 +123,18 @@ appbuilder.add_view(
     category = "Databases",
     category_icon = "fa-envelope"
 )
-appbuilder.add_view(
-    ProcedureConversionView,
-    "List Procedures",
-    icon = "fa-envelope",
-    category = "Databases"
-)
-
-appbuilder.add_view(
-    GitRepositoryView,
-    "List Git Repo",
-    icon = "fa-folder-open-o",
-    category = "Git",
-    category_icon = "fa-envelope"
-)
+# appbuilder.add_view(
+#     ProcedureConversionView,
+#     "List Procedures",
+#     icon = "fa-envelope",
+#     category = "Databases"
+# )
+#
+# appbuilder.add_view(
+#     GitRepositoryView,
+#     "List Git Repo",
+#     icon = "fa-folder-open-o",
+#     category = "Git",
+#     category_icon = "fa-envelope"
+# )
 appbuilder.add_view(DatabaseMasterView,'Database Jobs',icon='fa fa-sitemap',category='Database Details',category_icon='fa fa-sitemap')
