@@ -1,6 +1,6 @@
 from flask import render_template
 from flask_appbuilder.models.sqla.interface import SQLAInterface
-from flask_appbuilder import ModelView, ModelRestApi
+from flask_appbuilder import ModelView, ModelRestApi,MasterDetailView
 from .models import DatabaseDetail,ProcedureConversion,GitRepository
 from . import appbuilder, db
 from flask_appbuilder.actions import action
@@ -36,12 +36,15 @@ class DatabaseDetailView(ModelView):
 
 class ProcedureConversionView(ModelView):
     datamodel = SQLAInterface(ProcedureConversion)
-    list_columns = ['procedure_name', 'python_file']
+    list_columns = ['procedure_name', 'python_file','python_code','testcase_file','testcase_code']
+    base_permissions = ['can_show','can_delete']
+
 
 class GitRepositoryView(ModelView):
     datamodel = SQLAInterface(GitRepository)
     list_columns = ['repo_name', 'branch_name', 'username']
-    add_columns = ["repo_path", "branch_name",  "username", "repo_name","token"                   ]
+    add_columns = ["repo_path", "branch_name",  "username", "repo_name","token"  ]
+    edit_columns = ["repo_path", "branch_name", "username", "repo_name", "token"]
     add_exclude_columns = ["created_at","updated_at"]
 
     @action("push", "Start Migration", "Do you really want to?", "fa-rocket")
@@ -53,9 +56,9 @@ class GitRepositoryView(ModelView):
         return redirect(self.get_redirect())
 
 
-# class GroupModelView(ModelView):
-#     datamodel = SQLAInterface(DatabaseDetailView)
-#     related_views = [ProcedureConversionView]
+class DatabaseMasterView(MasterDetailView):
+    datamodel = SQLAInterface(DatabaseDetail)
+    related_views = [GitRepositoryView,ProcedureConversionView]
 
 """
     Create your Model based REST API::
@@ -134,3 +137,4 @@ appbuilder.add_view(
     category = "Git",
     category_icon = "fa-envelope"
 )
+appbuilder.add_view(DatabaseMasterView,'Database Jobs',icon='fa fa-sitemap',category='Database Details',category_icon='fa fa-sitemap')

@@ -43,6 +43,7 @@ def convert_sql_to_python(sql_procedure):
         "prompt": f"""C1.first Convert the following SQL stored procedure into equivalent Python code using the 
 sqlalchemy with raw sql query, database connections , pandas library (for data transformations and queries) and include a full database connection. 
 Note: Provide only the code ,no explanations or comments.: {sql_procedure}""",
+        "temperature": 0.1,
         "stream": False
     }
 
@@ -63,17 +64,18 @@ Note: Provide only the code ,no explanations or comments.: {sql_procedure}""",
 
 def generate_testcase(code_text):
     api_url = "http://localhost:11434/api/generate"
-    model = "codellama:python"
+    model = "codellama:7b"
     test_case_payload = {
         "model": model,
-        "prompt": f""" write a unit test for this function:  {code_text}  Note: Provide only the code , no explanations or comments.  """,
+        "prompt": f""" write a unit test for this function  and Provide only the code , no explanations or comments.:  {code_text}    """,
+        "temperature": 0.1,
         "stream": False
     }
-    print(test_case_payload)
+    # print(test_case_payload)
     testcase_response = requests.post(api_url, data=json.dumps(test_case_payload),
                                       headers={"Content-Type": "application/json"})
     test_resp_text = testcase_response.json()['response']
-    print(testcase_response.json())
+    # print(testcase_response.json())
     if '```python' in test_resp_text:
         test_code_text = ''.join(test_resp_text.split('```python')[1::])
     else:
@@ -89,7 +91,7 @@ def store_translated_code(procedure_name, python_code):
     file_name = os.path.join(python_code_file_folder,f"{procedure_name}.py")
     with open(file_name, "w") as file:
         file.write(python_code)
-    print('file_name',file_name)
+    # print('file_name',file_name)
     return file_name
 
 def add_audit(msg,stage,db_id):
@@ -103,7 +105,14 @@ def update_status(msg,db_id):
     db_dt.status =msg # 'In Progress'
     db.session.commit()
 
+def read_python_file(file_path):
+    with open(file_path, 'r') as file:
+        return file.read()
+
 def convert_procedures_task(items):
+    # file_path='procedures/transfer.py'
+
+    # print(my_resp)
     for item in items:
         try:
             update_status('In Progress',item.id)
@@ -126,7 +135,7 @@ def convert_procedures_task(items):
                         # Store the translated Python code
                         filepath = store_translated_code(procedure_name, python_code)
                         files_list.append(filepath)
-                        procedures = ProcedureConversion(procedure_name='test_user',python_file=filepath,
+                        procedures = ProcedureConversion(procedure_name=procedure_name,python_file=filepath,
                                                         testcase_file='',python_code=python_code,
                                                         testcase_code='',
                                                         database_id=item.id)
@@ -134,6 +143,7 @@ def convert_procedures_task(items):
                         db.session.commit()
                         proceduresid = procedures.id
                         print('Completed Code')
+                        python_code = read_python_file(filepath)
                         testcase_code = generate_testcase(python_code)
                         testcase_file = store_translated_code('UnitTest'+procedure_name, testcase_code)
                         add_audit(f"Generated Test case for  {procedure_name} successfully", 'Test Case Generation', item.id)
