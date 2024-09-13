@@ -1,7 +1,7 @@
 from flask import render_template
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_appbuilder import ModelView, ModelRestApi,MasterDetailView
-from .models import DatabaseDetail,ProcedureConversion,GitRepository
+from .models import DatabaseDetail,ProcedureConversion,GitRepository, ModelDetails
 from . import appbuilder, db
 from flask_appbuilder.actions import action
 from flask import redirect
@@ -14,6 +14,11 @@ class ProcedureConversionView(ModelView):
     datamodel = SQLAInterface(ProcedureConversion)
     list_columns = ['procedure_name', 'python_file','python_code','testcase_file','testcase_code']
     base_permissions = ['can_show','can_delete']
+
+class ModelDetailsView(ModelView):
+    datamodel = SQLAInterface(ModelDetails)
+    list_columns = ['model', 'api_url','is_default']
+    add_exclude_columns = ["created_at"]
 
 
 class GitRepositoryView(ModelView):
@@ -66,6 +71,13 @@ appbuilder.add_view(
     icon = "fa-folder-open-o",
     category = "Databases",
     category_icon = "fa-envelope"
+)
+appbuilder.add_view(
+    ModelDetailsView,
+    "List Models",
+    icon = "fa-folder-open-o",
+    category = "Models",
+    # category_icon = "fa-envelope"
 )
 
 appbuilder.add_view_no_menu(GitRepositoryView, endpoint=None, static_folder=None)

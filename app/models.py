@@ -1,5 +1,7 @@
+from email.policy import default
+
 from flask_appbuilder import Model
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum,Text,JSON, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Enum, Text, JSON, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
@@ -38,10 +40,11 @@ class DatabaseDetail(Model):
 class ProcedureConversion(Model):
     id = Column(Integer, primary_key=True)
     procedure_name = Column(String(100), nullable=False)
-    python_file = Column(String(200), nullable=False)
-    testcase_file = Column(String(200), nullable=False)
-    python_code = Column(Text, nullable=False)
-    testcase_code = Column(Text, nullable=False)
+    python_file = Column(String(200), nullable=True)
+    testcase_file = Column(String(200), nullable=True)
+    sql_code = Column(Text, nullable=True)
+    python_code = Column(Text, nullable=True)
+    testcase_code = Column(Text, nullable=True)
     # database_id = Column(Integer, nullable=False)  # Foreign Key to DatabaseDetail.id
     database_id = Column(Integer, ForeignKey('database_detail.id'))
     database = relationship("DatabaseDetail")
@@ -73,3 +76,13 @@ class Audit(Model):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     def __repr__(self):
         return self.message
+
+class ModelDetails(Model):
+    id = Column(Integer, primary_key=True)
+    model = Column(String(255), nullable=True)
+    api_key = Column(String(255), nullable=True)
+    api_url = Column(String(255), nullable=True)
+    is_default = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
+    def __repr__(self):
+        return self.model
