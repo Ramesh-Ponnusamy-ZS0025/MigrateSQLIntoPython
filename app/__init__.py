@@ -4,6 +4,12 @@ from flask import Flask
 from flask_appbuilder import AppBuilder, SQLA
 from celery import Celery
 
+from flask_appbuilder import IndexView
+
+
+class MyIndexView(IndexView):
+    index_template = 'my_index.html'
+#
 """
  Logging configuration
 """
@@ -14,8 +20,10 @@ logging.getLogger().setLevel(logging.DEBUG)
 app = Flask(__name__)
 app.config.from_object("config")
 db = SQLA(app)
+
 # appbuilder = AppBuilder(app, db.session)
-appbuilder = AppBuilder(app, db.session,base_template='my_index.html')
+# appbuilder = AppBuilder(app, db.session,base_template='my_index.html')
+appbuilder = AppBuilder(app, db.session,indexview=MyIndexView)
 
 
 
