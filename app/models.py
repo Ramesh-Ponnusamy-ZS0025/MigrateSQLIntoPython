@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Enum, Text, JSON, Da
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
+from sqlalchemy.engine import URL
 """
 
 You can use the extra Flask-AppBuilder fields and Mixin's
@@ -26,11 +27,20 @@ class DatabaseDetail(Model):
 
     @hybrid_property
     def conn(self) -> str:
-        conn = self.dialect + '://' + self.user + ':' + self.password + '@' + self.host + ':' + str(self.port) + '/' + self.dbname
-        return str(conn)
+        conn = URL.create(
+            drivername=self.dialect,  # Change this to your specific database driver
+            username=self.user,
+            password=self.password,  # Password with special characters
+            host=self.host,
+            port=str(self.port),  # Change this to your specific port
+            database=self.dbname
+        )
+        # conn = self.dialect + '://' + self.user + ':' + self.password + '@' + self.host + ':' + str(self.port) + '/' + self.dbname
+        return conn
 
     @hybrid_property
     def auditconn(self) -> str:
+
         auditconn = self.dialect + '://' + self.user + ':' + '****' + '@' + self.host + ':' + str(self.port) + '/' + self.dbname
         return str(auditconn)
 

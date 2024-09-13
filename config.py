@@ -109,7 +109,7 @@ IMG_UPLOAD_URL = "/static/uploads/"
 # APP_THEME = "united.css"
 # APP_THEME = "yeti.css"
 
-# APP_NAME = "Agile Architects"
+APP_NAME = "Agile Architects"
 # APP_THEME = "spacelab.css"
 # APP_THEME = ""
 # VAADIN_SERVLET_PARAMETER_PRODUCTION_MODE = True
