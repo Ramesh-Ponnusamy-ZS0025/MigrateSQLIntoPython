@@ -1,4 +1,4 @@
-from flask import render_template
+from flask import render_template, flash
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_appbuilder import ModelView, ModelRestApi,MasterDetailView
 from .models import DatabaseDetail,ProcedureConversion,GitRepository, ModelDetails
@@ -44,6 +44,7 @@ class GroupModelView(ModelView):
         # for item in items:
         #     print(item.id)
         convert_procedures_task(items)
+        flash("Convertion Completed Successfully!")
         """
             do something with the item record
         """

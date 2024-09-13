@@ -24,6 +24,8 @@ class DatabaseDetail(Model):
     port = Column(Integer, nullable=False)
     dialect = Column(Enum("mysql", "mssql+pymssql", "postgresql"))
     status = Column(String(20), default="Yet to start")  # Status: pending, in_progress, completed
+    conversion_prompt = Column(Text, nullable=True)
+    unittestcase_prompt = Column(Text, nullable=True)
 
     @hybrid_property
     def conn(self) -> str:
@@ -35,7 +37,6 @@ class DatabaseDetail(Model):
             port=str(self.port),  # Change this to your specific port
             database=self.dbname
         )
-        # conn = self.dialect + '://' + self.user + ':' + self.password + '@' + self.host + ':' + str(self.port) + '/' + self.dbname
         return conn
 
     @hybrid_property

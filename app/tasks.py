@@ -77,7 +77,7 @@ def generate_testcase(code_text):
     model = "codellama:7b"
     test_case_payload = {
         "model": model,
-        "prompt": f""" write a unit test for this function  and Provide only completed the code , no explanations or comments.:  {code_text}    """,
+        "prompt": code_text,
         # "temperature": 0.1,
         "stream": False
     }
@@ -85,7 +85,7 @@ def generate_testcase(code_text):
     testcase_response = requests.post(api_url, data=json.dumps(test_case_payload),
                                       headers={"Content-Type": "application/json"})
     test_resp_text = testcase_response.json()['response']
-    # print(testcase_response.json())
+    print(testcase_response.json())
     if '```python' in test_resp_text:
         test_code_text = extract_code(test_resp_text, 'python')
         # if len(code_text)>=1:
@@ -162,7 +162,7 @@ def process_migration(item):
 
                 # Convert SQL to Python using the API
                 try:
-                    python_code = convert_sql_to_python(procedure_sql)
+                    python_code = convert_sql_to_python(item.conversion_prompt.format(input=procedure_sql))
                     print(f"Converted {procedure_name} successfully.",python_code)
                     add_audit(f"Converted SQL {procedure_name} successfully", 'SQL to Python Conversion', item.id)
                     # Store the translated Python code
@@ -173,10 +173,11 @@ def process_migration(item):
                     procedure.python_code = python_code
                     db.session.commit()
 
-
                     print('Completed Code')
+                    prompt_txt = item.unittestcase_prompt
+                    prompt_txt=prompt_txt.format(input=python_code)
                     python_code = read_python_file(filepath)
-                    testcase_code = generate_testcase(python_code)
+                    testcase_code = generate_testcase(prompt_txt)
                     testcase_file = store_translated_code('UnitTest'+procedure_name, testcase_code)
                     add_audit(f"Generated Test case for  {procedure_name} successfully", 'Test Case Generation', item.id)
 
