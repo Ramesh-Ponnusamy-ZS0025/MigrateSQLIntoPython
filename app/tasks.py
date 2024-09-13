@@ -85,7 +85,7 @@ def generate_testcase(code_text):
     testcase_response = requests.post(api_url, data=json.dumps(test_case_payload),
                                       headers={"Content-Type": "application/json"})
     test_resp_text = testcase_response.json()['response']
-    print(testcase_response.json())
+    # print(testcase_response.json())
     if '```python' in test_resp_text:
         test_code_text = extract_code(test_resp_text, 'python')
         # if len(code_text)>=1:
