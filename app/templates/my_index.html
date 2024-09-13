@@ -5,3 +5,8 @@
     <link rel="stylesheet" href="{{url_for('static',filename='css/changemenu.css')}}"></link>
 {% endblock %}
 
+{% block head_js %}
+{{ super() }}
+ <script src="{{url_for('static',filename='js/menumodification.js')}}"> </script>
+
+{% endblock %}
