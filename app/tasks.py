@@ -138,63 +138,68 @@ def update_procedure_details(procedures,database_id):
 
 def convert_procedures_task(items):
     # file_path='procedures/transfer.py'
+    if isinstance(items,list):
+        # print(my_resp)
+        for item in items:
+            process_migration(item)
+    else:
+        process_migration(items)
 
-    # print(my_resp)
-    for item in items:
-        try:
-            update_status('In Progress',item.id)
-            connection1, engine1 = utils.db_conn1(item.id)
-            # Get all stored procedures from the database
-            procedures = get_stored_procedures(connection1)
-            print('procedures')
-            update_procedure_details(procedures, item.id)
-            add_audit('Done ', 'Procedures', item.id)
-            if True:
-                files_list=[]
-                for proc in procedures:
-                    procedure_name = proc[0]  # Procedure name
-                    procedure_sql = proc[1]  # SQL definition
+def process_migration(item):
+    try:
+        update_status('In Progress',item.id)
+        connection1, engine1 = utils.db_conn1(item.id)
+        # Get all stored procedures from the database
+        procedures = get_stored_procedures(connection1)
+        print('procedures')
+        update_procedure_details(procedures, item.id)
+        add_audit('Done ', 'Procedures', item.id)
+        if True:
+            files_list=[]
+            for proc in procedures:
+                procedure_name = proc[0]  # Procedure name
+                procedure_sql = proc[1]  # SQL definition
 
-                    # Convert SQL to Python using the API
-                    try:
-                        python_code = convert_sql_to_python(procedure_sql)
-                        print(f"Converted {procedure_name} successfully.",python_code)
-                        add_audit(f"Converted SQL {procedure_name} successfully", 'SQL to Python Conversion', item.id)
-                        # Store the translated Python code
-                        filepath = store_translated_code(procedure_name, python_code)
-                        files_list.append(filepath)
-                        procedure = db.session.query(ProcedureConversion).filter(ProcedureConversion.database_id==item.id,ProcedureConversion.procedure_name==procedure_name).first()
-                        procedure.python_file = filepath
-                        procedure.python_code = python_code
-                        db.session.commit()
+                # Convert SQL to Python using the API
+                try:
+                    python_code = convert_sql_to_python(procedure_sql)
+                    print(f"Converted {procedure_name} successfully.",python_code)
+                    add_audit(f"Converted SQL {procedure_name} successfully", 'SQL to Python Conversion', item.id)
+                    # Store the translated Python code
+                    filepath = store_translated_code(procedure_name, python_code)
+                    files_list.append(filepath)
+                    procedure = db.session.query(ProcedureConversion).filter(ProcedureConversion.database_id==item.id,ProcedureConversion.procedure_name==procedure_name).first()
+                    procedure.python_file = filepath
+                    procedure.python_code = python_code
+                    db.session.commit()
 
 
-                        print('Completed Code')
-                        python_code = read_python_file(filepath)
-                        testcase_code = generate_testcase(python_code)
-                        testcase_file = store_translated_code('UnitTest'+procedure_name, testcase_code)
-                        add_audit(f"Generated Test case for  {procedure_name} successfully", 'Test Case Generation', item.id)
+                    print('Completed Code')
+                    python_code = read_python_file(filepath)
+                    testcase_code = generate_testcase(python_code)
+                    testcase_file = store_translated_code('UnitTest'+procedure_name, testcase_code)
+                    add_audit(f"Generated Test case for  {procedure_name} successfully", 'Test Case Generation', item.id)
 
-                        files_list.append(testcase_file)
-                        procedure = db.session.query(ProcedureConversion).filter(ProcedureConversion.database_id==item.id,ProcedureConversion.procedure_name==procedure_name).first()
-                        procedure.testcase_file = testcase_file
-                        procedure.testcase_code = testcase_code
-                        db.session.commit()
-                        print('Saved',testcase_file)
+                    files_list.append(testcase_file)
+                    procedure = db.session.query(ProcedureConversion).filter(ProcedureConversion.database_id==item.id,ProcedureConversion.procedure_name==procedure_name).first()
+                    procedure.testcase_file = testcase_file
+                    procedure.testcase_code = testcase_code
+                    db.session.commit()
+                    print('Saved',testcase_file)
 
-                    except Exception as e:
-                        raise e
-                        print(f"Failed to convert {procedure_name}: {e}")  #
-                        update_status('Failed',item.id)
-                        add_audit(f"Failed to convert {procedure_name}: {e}", 'Migration', item.id)
+                except Exception as e:
+                    raise e
+                    print(f"Failed to convert {procedure_name}: {e}")  #
+                    update_status('Failed',item.id)
+                    add_audit(f"Failed to convert {procedure_name}: {e}", 'Migration', item.id)
 
-                # files_list = ['procedures/transfer.py', 'procedures/UnitTesttransfer.py']
+            # files_list = ['procedures/transfer.py', 'procedures/UnitTesttransfer.py']
 
-                print('processing git')
-                msg = push_to_git(item.id, files_list)
-                print('done git')
-                update_status(msg,item.id)
-        except Exception as e:
-            raise e
-            update_status('Failed', item.id)
-            add_audit(f"Failed to Process : {e}", 'Migration Process', item.id)
+            print('processing git')
+            msg = push_to_git(item.id, files_list)
+            print('done git')
+            update_status(msg,item.id)
+    except Exception as e:
+        raise e
+        update_status('Failed', item.id)
+        add_audit(f"Failed to Process : {e}", 'Migration Process', item.id)

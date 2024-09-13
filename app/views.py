@@ -70,7 +70,7 @@ appbuilder.add_view(
     "List Databases Group",
     icon = "fa-folder-open-o",
     category = "Databases",
-    category_icon = "fa-envelope"
+    category_icon='fa fa-bitbucket'
 )
 appbuilder.add_view(
     ModelDetailsView,
