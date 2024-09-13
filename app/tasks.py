@@ -77,8 +77,8 @@ def generate_testcase(code_text):
     model = "codellama:7b"
     test_case_payload = {
         "model": model,
-        "prompt": f""" write a unit test for this function  and Provide only the code , no explanations or comments.:  {code_text}    """,
-        "temperature": 0.1,
+        "prompt": f""" write a unit test for this function  and Provide only completed the code , no explanations or comments.:  {code_text}    """,
+        # "temperature": 0.1,
         "stream": False
     }
     # print(test_case_payload)
