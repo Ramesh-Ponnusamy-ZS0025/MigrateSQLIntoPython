@@ -15,6 +15,13 @@ var versand = document.getElementsByClassName('navbar-brand')[0];
 versand.getElementsByTagName('a')[0].textContent = ''
 versand.getElementsByTagName('a')[0].innerHTML="<img id = 'menuimg' src=\" "+menuicon+ "\" style=\" width: 40px; height: 40px; margin-top: -11px; \">";
 
+$(document).on('click', '#modal-confirm-ok', function() {
+    // Show the spinner
+    $('#spinner').show();
+     // Close the modal window
+        $(this).closest('.modal').modal('hide');
+});
+
 });
 
 

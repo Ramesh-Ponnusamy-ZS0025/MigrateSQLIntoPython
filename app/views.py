@@ -1,3 +1,5 @@
+import time
+
 from flask import render_template, flash
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_appbuilder import ModelView, ModelRestApi,MasterDetailView
@@ -12,8 +14,9 @@ from .git_actions import push_to_git
 
 class ProcedureConversionView(ModelView):
     datamodel = SQLAInterface(ProcedureConversion)
-    list_columns = ['procedure_name', 'python_file','python_code','testcase_file','testcase_code']
+    list_columns = ['procedure_name', 'python_file','testcase_file']
     base_permissions = ['can_show','can_delete']
+    add_exclude_columns = ['python_code','testcase_code']
 
 class ModelDetailsView(ModelView):
     datamodel = SQLAInterface(ModelDetails)
@@ -44,7 +47,8 @@ class GroupModelView(ModelView):
         # for item in items:
         #     print(item.id)
         convert_procedures_task(items)
-        flash("Convertion Completed Successfully!")
+        # time.sleep(2)
+        flash("Convertion Completed Successfully!","info")
         """
             do something with the item record
         """

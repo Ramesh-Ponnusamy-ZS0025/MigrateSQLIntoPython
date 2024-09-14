@@ -26,3 +26,12 @@ Ready to turn your SQL queries and stored procedures into slick Python code?""")
   </div>
 </div>
 {% endblock %}
+
+       {% block body %}
+    {{ super() }}
+
+    <!-- Spinner GIF, initially hidden -->
+    <div id="spinner" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);">
+        <img src="{{ url_for('static', filename='spinner.gif') }}" alt="Loading...">
+    </div>
+{% endblock %}
