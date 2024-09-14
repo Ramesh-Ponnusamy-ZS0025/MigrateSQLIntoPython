@@ -154,7 +154,8 @@ def process_migration(item):
                 # Convert SQL to Python using the API
                 try:
                     # python_code = convert_sql_to_python(item.conversion_prompt.format(input=procedure_sql))
-                    python_code = get_model_reponse(item.conversion_prompt.format(input=procedure_sql))
+                    cv_prompt = item.conversion_prompt.format(input=procedure_sql)
+                    python_code = get_model_reponse(cv_prompt)
                     print(f"Converted {procedure_name} into python successfully.")
                     add_audit(f"Converted SQL {procedure_name} successfully", 'SQL to Python Conversion', item.id)
                     # Store the translated Python code
