@@ -27,7 +27,7 @@ class ModelDetailsView(ModelView):
 class AuditView(ModelView):
     datamodel = SQLAInterface(Audit)
     list_columns = ['message', 'stage','database']
-    base_permissions = ['can_show']
+    # base_permissions = ['can_delete']
 
 class GitRepositoryView(ModelView):
     datamodel = SQLAInterface(GitRepository)
