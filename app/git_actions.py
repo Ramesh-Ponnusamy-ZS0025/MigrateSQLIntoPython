@@ -7,7 +7,8 @@ import shutil
 def push_to_git(database_id,files_to_commit):
     try:
         commit_message='Commit from Agile Architects'
-        local_repo_path = '/home/balamurugan.v@zucisystems.com/workspace/fab/git'
+        # local_repo_path = '/home/balamurugan.v@zucisystems.com/workspace/fab/git'
+        local_repo_path = '/home/ramesh.p@zucisystems.com/workspace/fab/git'
 
         git_repo_details = db.session.query(GitRepository).filter(GitRepository.database_id == database_id).first()
 

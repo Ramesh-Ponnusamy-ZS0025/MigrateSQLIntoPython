@@ -3,7 +3,7 @@ import time
 from flask import render_template, flash
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_appbuilder import ModelView, ModelRestApi,MasterDetailView
-from .models import DatabaseDetail,ProcedureConversion,GitRepository, ModelDetails
+from .models import DatabaseDetail,ProcedureConversion,GitRepository, ModelDetails, Audit
 from . import appbuilder, db
 from flask_appbuilder.actions import action
 from flask import redirect
@@ -23,6 +23,11 @@ class ModelDetailsView(ModelView):
     list_columns = ['model', 'api_url','is_default']
     add_exclude_columns = ["created_at"]
 
+
+class AuditView(ModelView):
+    datamodel = SQLAInterface(Audit)
+    list_columns = ['message', 'stage','database']
+    base_permissions = ['can_show']
 
 class GitRepositoryView(ModelView):
     datamodel = SQLAInterface(GitRepository)
@@ -47,8 +52,9 @@ class GroupModelView(ModelView):
         # for item in items:
         #     print(item.id)
         convert_procedures_task(items)
+        resp ='Convertion completed successfully! Please check the procedures list'
         # time.sleep(2)
-        flash("Convertion Completed Successfully!","info")
+        flash(resp,"info")
         """
             do something with the item record
         """
@@ -77,11 +83,18 @@ appbuilder.add_view(
     category = "Databases",
     category_icon='fa fa-bitbucket'
 )
+# appbuilder.add_view(
+#     ModelDetailsView,
+#     "List Models",
+#     icon = "fa-folder-open-o",
+#     category = "Models",
+#     # category_icon = "fa-envelope"
+# )
 appbuilder.add_view(
-    ModelDetailsView,
-    "List Models",
+    AuditView,
+    "List Audit",
     icon = "fa-folder-open-o",
-    category = "Models",
+    category = "Audit",
     # category_icon = "fa-envelope"
 )
 

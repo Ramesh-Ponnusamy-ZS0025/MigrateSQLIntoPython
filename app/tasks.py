@@ -8,6 +8,9 @@ from app import db
 import os
 import re
 from .git_actions import push_to_git
+from .groq_api import get_model_reponse
+from .utils import extract_code
+
 
 def get_stored_procedures(connection):
     # get_select_query(connection, query, initial=0)
@@ -18,7 +21,7 @@ def get_stored_procedures(connection):
     # )
     # cursor = connection
 
-    print('conection',connection)
+
     # Query to get stored procedures from PostgreSQL or SQL Server
     result = connection.execute(text("""
         SELECT routine_name, routine_definition
@@ -32,13 +35,7 @@ def get_stored_procedures(connection):
 
     return stored_procedures
 
-def extract_code(text,language):
-    # Use regex to extract the content inside triple backticks
-    pattern = fr'```{language}(.*?)```'
-    # Use regex to extract the content inside the dynamically created backticks
-    code_blocks = re.findall(pattern, text, re.DOTALL)
-    code_blocks = ''.join(code_blocks)
-    return code_blocks
+
 
 def convert_sql_to_python(sql_procedure):
     api_url = "http://localhost:11434/api/generate"
@@ -58,7 +55,6 @@ def convert_sql_to_python(sql_procedure):
     if response.status_code == 200:
         # Return the generated Python code
         resp_text = response.json()['response']
-        print('resp_text',resp_text)
         if '```python' in resp_text:
             code_text = extract_code(resp_text,'python')
             # if len(code_text)>=1:
@@ -81,11 +77,9 @@ def generate_testcase(code_text):
         # "temperature": 0.1,
         "stream": False
     }
-    # print(test_case_payload)
     testcase_response = requests.post(api_url, data=json.dumps(test_case_payload),
                                       headers={"Content-Type": "application/json"})
     test_resp_text = testcase_response.json()['response']
-    # print(testcase_response.json())
     if '```python' in test_resp_text:
         test_code_text = extract_code(test_resp_text, 'python')
         # if len(code_text)>=1:
@@ -103,7 +97,6 @@ def store_translated_code(procedure_name, python_code):
     file_name = os.path.join(python_code_file_folder,f"{procedure_name}.py")
     with open(file_name, "w") as file:
         file.write(python_code)
-    # print('file_name',file_name)
     return file_name
 
 def add_audit(msg,stage,db_id):
@@ -126,11 +119,9 @@ def update_procedure_details(procedures,database_id):
         # Check if the record already exists
         procedure = db.session.query(ProcedureConversion).filter(ProcedureConversion.procedure_name == proc[0],ProcedureConversion.database_id == database_id,).first()
         if procedure:
-            print('update procedure')
             procedure.sql_code = proc[1]
             db.session.commit()
         else:
-            print('insert procedure')
             procedures = ProcedureConversion(procedure_name = proc[0], sql_code = proc[1], database_id = database_id)
             db.session.add(procedures)
             db.session.commit()
@@ -139,19 +130,19 @@ def update_procedure_details(procedures,database_id):
 def convert_procedures_task(items):
     # file_path='procedures/transfer.py'
     if isinstance(items,list):
-        # print(my_resp)
         for item in items:
             process_migration(item)
     else:
         process_migration(items)
 
 def process_migration(item):
+    resp = 'Convertion Completed Successfully!'
     try:
         update_status('In Progress',item.id)
         connection1, engine1 = utils.db_conn1(item.id)
         # Get all stored procedures from the database
         procedures = get_stored_procedures(connection1)
-        print('procedures')
+        print('Read the procedures is done')
         update_procedure_details(procedures, item.id)
         add_audit('Done ', 'Procedures', item.id)
         if True:
@@ -162,8 +153,9 @@ def process_migration(item):
 
                 # Convert SQL to Python using the API
                 try:
-                    python_code = convert_sql_to_python(item.conversion_prompt.format(input=procedure_sql))
-                    print(f"Converted {procedure_name} successfully.",python_code)
+                    # python_code = convert_sql_to_python(item.conversion_prompt.format(input=procedure_sql))
+                    python_code = get_model_reponse(item.conversion_prompt.format(input=procedure_sql))
+                    print(f"Converted {procedure_name} into python successfully.")
                     add_audit(f"Converted SQL {procedure_name} successfully", 'SQL to Python Conversion', item.id)
                     # Store the translated Python code
                     filepath = store_translated_code(procedure_name, python_code)
@@ -173,11 +165,11 @@ def process_migration(item):
                     procedure.python_code = python_code
                     db.session.commit()
 
-                    print('Completed Code')
+                    print('Completed Code Migration')
                     prompt_txt = item.unittestcase_prompt
                     prompt_txt=prompt_txt.format(input=python_code)
                     python_code = read_python_file(filepath)
-                    testcase_code = generate_testcase(prompt_txt)
+                    testcase_code = get_model_reponse(prompt_txt)
                     testcase_file = store_translated_code('UnitTest'+procedure_name, testcase_code)
                     add_audit(f"Generated Test case for  {procedure_name} successfully", 'Test Case Generation', item.id)
 
@@ -186,10 +178,8 @@ def process_migration(item):
                     procedure.testcase_file = testcase_file
                     procedure.testcase_code = testcase_code
                     db.session.commit()
-                    print('Saved',testcase_file)
-
                 except Exception as e:
-                    raise e
+                    resp='Failed to process! Please check the log!'
                     print(f"Failed to convert {procedure_name}: {e}")  #
                     update_status('Failed',item.id)
                     add_audit(f"Failed to convert {procedure_name}: {e}", 'Migration', item.id)
@@ -201,6 +191,7 @@ def process_migration(item):
             print('done git')
             update_status(msg,item.id)
     except Exception as e:
-        raise e
+        resp = 'Failed to process! Please check the log!'
         update_status('Failed', item.id)
         add_audit(f"Failed to Process : {e}", 'Migration Process', item.id)
+    return resp
