@@ -23,7 +23,7 @@ db = SQLA(app)
 
 # appbuilder = AppBuilder(app, db.session)
 # appbuilder = AppBuilder(app, db.session,base_template='my_index.html')
-appbuilder = AppBuilder(app, db.session,indexview=MyIndexView)
+appbuilder = AppBuilder(app, db.session,base_template='my_index.html',indexview=MyIndexView)
 
 
 
