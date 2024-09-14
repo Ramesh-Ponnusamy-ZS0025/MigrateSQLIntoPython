@@ -168,8 +168,8 @@ def process_migration(item):
 
                     print('Completed Code Migration')
                     prompt_txt = item.unittestcase_prompt
-                    prompt_txt=prompt_txt.format(input=python_code)
                     python_code = read_python_file(filepath)
+                    prompt_txt = prompt_txt.format(input=python_code)
                     testcase_code = get_model_reponse(prompt_txt)
                     testcase_file = store_translated_code('UnitTest'+procedure_name, testcase_code)
                     add_audit(f"Generated Test case for  {procedure_name} successfully", 'Test Case Generation', item.id)
