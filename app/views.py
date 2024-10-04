@@ -32,7 +32,7 @@ class AuditView(ModelView):
 class GitRepositoryView(ModelView):
     datamodel = SQLAInterface(GitRepository)
     list_columns = ['repo_name', 'branch_name', 'username']
-    add_columns = ["repo_path", "branch_name",  "username", "repo_name","token"  ]
+    add_columns = ["database","repo_path", "branch_name",  "username", "repo_name","token"  ]
     edit_columns = ["repo_path", "branch_name", "username", "repo_name", "token"]
     add_exclude_columns = ["created_at","updated_at"]
 

@@ -7,8 +7,7 @@ import shutil
 def push_to_git(database_id,files_to_commit):
     try:
         commit_message='Commit from Agile Architects'
-        # local_repo_path = '/home/balamurugan.v@zucisystems.com/workspace/fab/git'
-        local_repo_path = '/home/ramesh.p@zucisystems.com/workspace/fab/git'
+        local_repo_path= 'C:\\workspace'
 
         git_repo_details = db.session.query(GitRepository).filter(GitRepository.database_id == database_id).first()
 
@@ -28,6 +27,8 @@ def push_to_git(database_id,files_to_commit):
         print(remote_repo)
 
         git = repo.git
+        branches = repo.git.branch('-a')
+        print("Branches available:", branches)
 
         # Checkout to the target branch
         repo.git.checkout(git_repo_details.branch_name)
@@ -51,6 +52,7 @@ def push_to_git(database_id,files_to_commit):
         print("Files committed and pushed successfully!")
         return 'Success'
     except Exception as e:
+        raise e
         print('Failed while push to git ',e)
         return 'Failed'
 

@@ -1,7 +1,7 @@
 
 from groq import Groq
 from .utils import extract_code
-api_key = "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"
+api_key = "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"
 
 
 
@@ -17,7 +17,7 @@ def get_model_reponse(prompt):
                 "content": prompt
             }
         ],
-        model="llama3-8b-8192",
+        model="llama3-70b-8192",
     )
     response = chat_completion.choices[0].message.content
     if '```python' in response:

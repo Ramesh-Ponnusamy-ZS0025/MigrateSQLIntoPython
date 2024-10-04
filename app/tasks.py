@@ -10,7 +10,7 @@ import re
 from .git_actions import push_to_git
 from .groq_api import get_model_reponse
 from .utils import extract_code
-
+import time
 
 def get_stored_procedures(connection):
     # get_select_query(connection, query, initial=0)
@@ -32,8 +32,100 @@ def get_stored_procedures(connection):
     stored_procedures = result.fetchall()
     connection.close()
     # conn.close()
-
+    print("Stored Procedures:", stored_procedures)
     return stored_procedures
+
+def get_procedures_with_nested_calls(conn):
+    # conn = engine.connect()
+    # Step 1: Get the list of procedures and their definitions
+    result = conn.execute(text(""" 
+        SELECT routine_name, routine_definition 
+        FROM information_schema.routines 
+        WHERE routine_type = 'PROCEDURE'; 
+    """))
+
+    procedures = result.fetchall()
+    procedure_dict = {routine_name: routine_definition for routine_name, routine_definition in procedures}
+
+    # Step 2: Get the parameters for each procedure
+    param_result = conn.execute(text(""" 
+        SELECT 
+            r.routine_name,
+            p.parameter_name,
+            p.data_type,
+            p.parameter_mode 
+        FROM 
+            information_schema.routines r 
+        JOIN 
+            information_schema.parameters p 
+        ON 
+            r.specific_name = p.specific_name 
+        WHERE 
+            r.routine_type = 'PROCEDURE' 
+        ORDER BY 
+            r.routine_name, p.ordinal_position; 
+    """))
+
+    # Create a dictionary to hold parameter details
+    param_dict = {}
+    for row in param_result.fetchall():
+        proc_name = row[0]
+        param_name = row[1]
+        param_type = row[2]
+        param_mode = row[3]
+
+        if proc_name not in param_dict:
+            param_dict[proc_name] = []
+
+        param_dict[proc_name].append({
+            'name': param_name,
+            'type': param_type,
+            'mode': param_mode
+        })
+
+    # Step 3: Regular expression to find calls to other procedures
+    call_pattern = re.compile(r'CALL\s+([a-zA-Z_][a-zA-Z0-9_]*)')
+
+    # Step 4: Create a dictionary for the final output
+    final_queries = {}
+
+    # Step 5: Analyze each procedure's definition
+    for routine_name, routine_definition in procedures:
+        # Start building the query for the current procedure
+        final_query = f"-- Procedure: {routine_name}\n"
+
+        # Add parameters
+        if routine_name in param_dict:
+            params = param_dict[routine_name]
+            input_params = [f"{param['name']}" for param in params if param['mode'] == 'IN']
+            final_query += f"# Parameters: {', '.join(input_params)}\n"
+
+        final_query += routine_definition + "\n\n"  # Add the actual procedure code
+
+        # Find nested calls
+        calls = call_pattern.findall(routine_definition)
+        final_query +=""" Please use the below import function for nested method call for above procedures, dont use .  , dont create it.
+         keep those in top of the code . 
+        """
+        for nested_call in calls:
+            if nested_call in procedure_dict:
+                # Prepare input parameters for the nested call
+                nested_params = param_dict.get(nested_call, [])
+                input_params = [f"{param['name']}" for param in nested_params if param['mode'] == 'IN']
+                output_params = [f"{param['name']}" for param in nested_params if param['mode'] == 'OUT']
+
+                # Format the method call as Python function
+                final_query += f"{', '.join(output_params)} = {nested_call}({', '.join(input_params)})\n"
+
+                # Add nested procedure definition
+                # final_query += f"-- Nested Procedure: {nested_call}\n"
+                # final_query += procedure_dict[nested_call] + "\n\n"
+
+        # Store the complete query in the dictionary
+        final_queries[routine_name] = final_query
+
+    return final_queries
+
 
 
 
@@ -63,6 +155,7 @@ def convert_sql_to_python(sql_procedure):
             code_text = extract_code(resp_text, '')
             # if len(code_text)>=1:
             #     code_text=code_text[0]
+        print(code_text)
         return code_text
     else:
         raise Exception(f"API call failed: {response.status_code} - {response.text}")
@@ -86,6 +179,7 @@ def generate_testcase(code_text):
         #     code_text=code_text[0]
     else:
         test_code_text = extract_code(test_resp_text, '')
+    print(test_code_text)
     return test_code_text
 
 python_code_file_folder = 'procedures'
@@ -141,15 +235,22 @@ def process_migration(item):
         update_status('In Progress',item.id)
         connection1, engine1 = utils.db_conn1(item.id)
         # Get all stored procedures from the database
-        procedures = get_stored_procedures(connection1)
+        # procedures = get_stored_procedures(connection1)
+        # sp_with_nested_sp_calls = get_procedures_with_nested_calls()
+        procedures = get_procedures_with_nested_calls(connection1)
+
         print('Read the procedures is done')
         update_procedure_details(procedures, item.id)
         add_audit('Done ', 'Procedures', item.id)
         if True:
             files_list=[]
-            for proc in procedures:
-                procedure_name = proc[0]  # Procedure name
-                procedure_sql = proc[1]  # SQL definition
+            for procedure_name,procedure_sql in procedures.items():
+                time.sleep(5)
+                print(procedure_name)
+                print(procedure_sql)
+                print('------------------------')
+                # procedure_name = proc[0]  # Procedure name
+                # procedure_sql = proc[1]  # SQL definition
 
                 # Convert SQL to Python using the API
                 try:
@@ -192,6 +293,7 @@ def process_migration(item):
             print('done git')
             update_status(msg,item.id)
     except Exception as e:
+        raise e
         resp = 'Failed to process! Please check the log!'
         update_status('Failed', item.id)
         add_audit(f"Failed to Process : {e}", 'Migration Process', item.id)
