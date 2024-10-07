@@ -3,7 +3,7 @@ import time
 from flask import render_template, flash
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_appbuilder import ModelView, ModelRestApi,MasterDetailView
-from .models import DatabaseDetail,ProcedureConversion,GitRepository, ModelDetails, Audit
+from .models import DatabaseDetail,ProcedureConversion,GitRepository, ModelDetails, Audit,UploadedFile
 from . import appbuilder, db
 from flask_appbuilder.actions import action
 from flask import redirect
@@ -98,8 +98,21 @@ appbuilder.add_view(
     # category_icon = "fa-envelope"
 )
 
+class TestCaseFilesModelView(ModelView):
+    datamodel = SQLAInterface(UploadedFile)
+    label_columns = {"id":"Id", "file": "File Name", "download_acceptance_criteria": "Acceptance Criteria",
+                     "download_bdd_style_test_cases": "BDD style test cases",
+                     "download_test_automation_script": "Test Automation Script"}
+    add_columns = [ "name","file"]
+    edit_columns = [ "name","file"]
+    list_columns = ["id" ,"file_name", "download_acceptance_criteria","download_bdd_style_test_cases","download_test_automation_script"]
+    show_columns = ["file_name", "download"]
+
 appbuilder.add_view_no_menu(GitRepositoryView, endpoint=None, static_folder=None)
 appbuilder.add_view_no_menu(ProcedureConversionView, endpoint=None, static_folder=None)
 
+
 appbuilder.add_separator("Databases")
 appbuilder.add_view(DatabaseMasterView,'Database Jobs',icon='fa fa-sitemap',category='Databases',category_icon='fa fa-sitemap')
+
+appbuilder.add_view(TestCaseFilesModelView,'TestCases ', category='QA')

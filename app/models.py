@@ -6,6 +6,14 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
 from sqlalchemy.engine import URL
+from flask_appbuilder.models.mixins import AuditMixin, FileColumn
+from flask_appbuilder.filemanager import get_file_original_name
+from flask import Markup, url_for, flash
+from sqlalchemy import event
+import time
+from .qa import process_qa_llm
+from app import db
+
 """
 
 You can use the extra Flask-AppBuilder fields and Mixin's
@@ -97,3 +105,65 @@ class ModelDetails(Model):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     def __repr__(self):
         return self.model
+
+class UploadedFile(Model):
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255))
+    file = Column(FileColumn, nullable=False)
+    additional_inputs = Column(Text, nullable = True)
+    acceptance_criteria = Column(FileColumn, nullable=True)
+    bdd_style_test_cases = Column(FileColumn, nullable=True)
+    test_automation_script = Column(FileColumn, nullable=True)
+
+
+    def download_file(self):
+        return Markup(
+            '<a href="'
+            + url_for("TestCaseFilesModelView.download", filename=str(self.file))
+            + '">Download File</a>'
+        )
+    def download_acceptance_criteria(self):
+        return Markup(
+            '<a href="'
+            + url_for("TestCaseFilesModelView.download", filename=str(self.acceptance_criteria))
+            + '" class="btn btn-primary">'
+            + '<i class="fas fa-download"></i>'
+            + '</a>'
+        )
+
+    def download_bdd_style_test_cases(self):
+        return Markup(
+            '<a href="'
+            + url_for("TestCaseFilesModelView.download", filename=str(self.bdd_style_test_cases))
+            + '" class="btn btn-primary">'
+            + '<i class="fas fa-download"></i>'
+            + '</a>'
+        )
+
+    def download_test_automation_script(self):
+        return Markup(
+            '<a href="'
+            + url_for("TestCaseFilesModelView.download", filename=str(self.test_automation_script))
+            + '" class="btn btn-primary">'
+            + '<i class="fas fa-download"></i>'
+            + '</a>'
+        )
+
+    def file_name(self):
+        return get_file_original_name(str(self.file))
+
+
+def after_insert(mapper, connection, target):
+    # Perform your custom task after a record is inserted
+    print('processing')
+    ac_file_path,bdd_file_path,java_file_path = process_qa_llm(target.file,target.id)
+    connection.execute(
+        target.__table__.update().where(target.__table__.c.id == target.id).values(acceptance_criteria=ac_file_path,
+                                                                                   bdd_style_test_cases=bdd_file_path,
+                                                                                   test_automation_script=java_file_path )
+    )
+    # flash(f"New file uploaded: {target.filename}", 'info')
+    # Any other processing can go here
+
+# Register the event listener
+event.listen(UploadedFile, 'after_insert', after_insert)
