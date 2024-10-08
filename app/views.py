@@ -90,13 +90,9 @@ appbuilder.add_view(
 #     category = "Models",
 #     # category_icon = "fa-envelope"
 # )
-appbuilder.add_view(
-    AuditView,
-    "List Audit",
-    icon = "fa-folder-open-o",
-    category = "Audit",
-    # category_icon = "fa-envelope"
-)
+# appbuilder.add_view(    AuditView,    "List Audit",    icon = "fa-folder-open-o",    category = "Audit",
+#     # category_icon = "fa-envelope"
+# )
 
 class TestCaseFilesModelView(ModelView):
     datamodel = SQLAInterface(UploadedFile)

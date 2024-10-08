@@ -53,8 +53,8 @@ def process_qa_llm(file_path,file_id):
     java_code = extract_code(split_response[2], 'java')
     base_filename = os.path.splitext(os.path.basename(file_path))[0]
     base_filename +="_"+str(file_id)
-    ac_file_path = base_filename + '_acceptance_criteria.docx'
-    bdd_file_path = base_filename + '_bdd_style_test_case.docx'
+    ac_file_path = base_filename + '_acceptance_criteria.txt'
+    bdd_file_path = base_filename + '_bdd_style_test_case.txt'
     java_file_path = base_filename + '_test_script.java'
     write_string_to_file(ac_file_path,acceptance_criteria_content)
     write_string_to_file(bdd_file_path, bdd_style_test_case_content)
