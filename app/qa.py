@@ -41,6 +41,8 @@ def process_qa_llm(file_path,file_id):
             A feature file reflecting the BDD test cases.
             A step definition file that implements the necessary automation steps.  
             add line "process_zuci_is_done" 
+            
+            I will split the response using "process_zuci_is_done" finally from response
            """
     # content +=prompt
     content_response = get_llm_response(prompt)
