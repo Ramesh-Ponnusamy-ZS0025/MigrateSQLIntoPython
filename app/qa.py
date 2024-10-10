@@ -61,6 +61,8 @@ def process_qa_llm(file_path,file_id):
     content_response = get_llm_response(java_code_prompt)
 
     java_code = extract_code(content_response, 'java')
+    if len(java_code.strip())<=1:
+        java_code=content_response
     # java_code = extract_java_code(content_response)
     base_filename = os.path.splitext(os.path.basename(file_path))[0]
     base_filename +="_"+str(file_id)
